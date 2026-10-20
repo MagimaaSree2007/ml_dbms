@@ -1,12 +1,14 @@
-import mysql.connector
 
+import streamlit as st
+import mysql.connector
 
 def get_connection():
     connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Vasanyamu1*#",
-        database="ml_dataset_management"
+        host=st.secrets["mysql"]["host"],
+        port=int(st.secrets["mysql"]["port"]),
+        user=st.secrets["mysql"]["user"],
+        password=st.secrets["mysql"]["password"],
+        database=st.secrets["mysql"]["database"],
+        connection_timeout=10
     )
-
     return connection
