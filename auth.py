@@ -1,6 +1,6 @@
+
 import bcrypt
 from database import get_connection
-
 
 
 def register_user(name, email, password, role="User"):
@@ -13,7 +13,7 @@ def register_user(name, email, password, role="User"):
 
         # Check whether this email already exists
         cursor.execute(
-            "SELECT user_id FROM Users WHERE email = %s",
+            "SELECT user_id FROM users WHERE email = %s",
             (email.strip(),)
         )
 
@@ -26,10 +26,10 @@ def register_user(name, email, password, role="User"):
             bcrypt.gensalt()
         ).decode("utf-8")
 
-        # Public registration must create a normal User account
+        # Create a normal User account
         cursor.execute(
             """
-            INSERT INTO Users (name, email, password_hash, role)
+            INSERT INTO users (name, email, password_hash, role)
             VALUES (%s, %s, %s, %s)
             """,
             (name.strip(), email.strip(), password_hash, "User")
@@ -58,11 +58,11 @@ def login_user(email, password):
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # Find the registered user by email
+        # Use lowercase users to match the Aiven table name
         cursor.execute(
             """
             SELECT user_id, name, email, password_hash, role
-            FROM Users
+            FROM users
             WHERE email = %s
             """,
             (email.strip(),)
@@ -73,14 +73,13 @@ def login_user(email, password):
         if user is None:
             return None
 
-        # Verify the entered password against the stored bcrypt hash
+        # Verify the entered password against the stored hash
         stored_hash = user["password_hash"]
 
         if isinstance(stored_hash, str):
             stored_hash = stored_hash.encode("utf-8")
 
         if bcrypt.checkpw(password.encode("utf-8"), stored_hash):
-            # Do not expose the password hash to the app
             user.pop("password_hash", None)
             return user
 
@@ -95,3 +94,4 @@ def login_user(email, password):
             cursor.close()
         if connection and connection.is_connected():
             connection.close()
+
